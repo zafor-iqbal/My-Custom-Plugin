@@ -7,7 +7,7 @@
  */
 
 
-function my_custom_plugin_scripts() {
+ function my_custom_plugin_scripts() {
     wp_enqueue_script('jquery');
 }
 add_action('wp_enqueue_scripts', 'my_custom_plugin_scripts');
@@ -40,7 +40,26 @@ function create_myrecords_table() {
     dbDelta($sql);
 }
 
-register_activation_hook(__FILE__, 'create_myrecords_table');
+
+function update_permalink_structure() {
+    // Update permalink structure to 'Post name'
+    global $wp_rewrite;
+    $wp_rewrite->set_permalink_structure('/%postname%/');
+
+    // Flush rewrite rules to apply changes
+    flush_rewrite_rules();
+}
+
+function my_custom_plugin_activation() {
+    // Call function to create table
+    create_myrecords_table();
+
+    // Call function to update permalink structure
+    update_permalink_structure();
+}
+
+register_activation_hook(__FILE__, 'my_custom_plugin_activation');
+
 
 
 
