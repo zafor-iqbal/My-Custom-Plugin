@@ -187,6 +187,7 @@ jQuery(document).ready(function($) {
 function my_custom_frontend_form_handle_ajax() {
 
      // Check if the user has already submitted in the last 24 hours
+     //  Comment this portion to test multiple submissions
      if (isset($_COOKIE['my_custom_form_submitted'])) {
         echo 'You have already submitted the form. Please wait 24 hours before submitting again.';
         wp_die();
