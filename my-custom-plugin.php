@@ -239,7 +239,7 @@ function my_custom_frontend_form_handle_ajax() {
 
         if ($result) {
             // Set a cookie that expires in 24 hours
-            // setcookie('my_custom_form_submitted', '1', time() + 86400, COOKIEPATH, COOKIE_DOMAIN);
+            setcookie('my_custom_form_submitted', '1', time() + 86400, COOKIEPATH, COOKIE_DOMAIN);
     
             echo 'Form submitted successfully.';
         } else {
