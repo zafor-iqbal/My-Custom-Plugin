@@ -3,7 +3,7 @@
  * Plugin Name:         My Custom Plugin
  * Plugin URI:          https://zaforiqbal.com/plugins/my-custom-plugin/
  * Description:         A custom plugin to create a table named 'myrecords' with specific columns, view , search and delete records.
- * Version:             1.0
+ * Version:             1.0.1
  * Author:              Zafor Iqbal
  * Author URI:          https://zaforiqbal.com/
  * License:             GPLv2 or later
