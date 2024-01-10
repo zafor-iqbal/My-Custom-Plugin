@@ -1,22 +1,43 @@
 <?php
 /**
- * Plugin Name: My Custom Plugin Github
- * Description: A custom plugin to create a table named 'myrecords' with specific columns, view , search and delete records.
- * Version: 1.0
- * Author: Zafor
+ * Plugin Name:         My Custom Plugin
+ * Plugin URI:          https://zaforiqbal.com/plugins/my-custom-plugin/
+ * Description:         A custom plugin to create a table named 'myrecords' with specific columns, view , search and delete records.
+ * Version:             1.0
+ * Author:              Zafor Iqbal
+ * Author URI:          https://zaforiqbal.com/
+ * License:             GPLv2 or later
+ * License URI:         http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Requires at least:   4.9
+ * Requires PHP:        5.6
+ * 
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU
+ * General Public License version 2, as published by the Free Software Foundation. You may NOT assume
+ * that you can use any other version of the GPL.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
 
- function my_custom_plugin_scripts() {
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'Invalid request.' );
+}
+
+/**
+ * Enqueues jQuery scripts.
+ */
+function my_custom_plugin_scripts() {
     wp_enqueue_script('jquery');
 }
 add_action('wp_enqueue_scripts', 'my_custom_plugin_scripts');
 
-
+/**
+ * Creates 'myrecords' table in the database.
+ */
 function create_myrecords_table() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'myrecords';
-
     $charset_collate = $wpdb->get_charset_collate();
 
     $sql = "CREATE TABLE $table_name (
@@ -40,28 +61,35 @@ function create_myrecords_table() {
     dbDelta($sql);
 }
 
-
+/**
+ * Updates the permalink structure to 'Post name'.
+ */
 function update_permalink_structure() {
-    // Update permalink structure to 'Post name'
     global $wp_rewrite;
     $wp_rewrite->set_permalink_structure('/%postname%/');
-
-    // Flush rewrite rules to apply changes
     flush_rewrite_rules();
 }
 
+/**
+ * Activates the plugin.
+ * - Creates necessary database tables.
+ * - Updates permalink structure.
+ */
 function my_custom_plugin_activation() {
-    // Call function to create table
     create_myrecords_table();
-
-    // Call function to update permalink structure
     update_permalink_structure();
 }
-
 register_activation_hook(__FILE__, 'my_custom_plugin_activation');
 
 
 
+
+/**
+ * Displays a custom frontend form.
+ *
+ * This function outputs the HTML for a frontend form,
+ * and includes inline JavaScript for handling form submission via AJAX.
+ */
 
 function my_custom_frontend_form() {
     ?>
@@ -141,13 +169,28 @@ jQuery(document).ready(function($) {
 <?php
 }
 
+/**
+ * Handles AJAX requests for the frontend form submission.
+ *
+ * This function processes the AJAX request made by the 'my_custom_frontend_form' function.
+ * It performs several key actions:
+ * 1. Validates the nonce and user capabilities (if necessary) for security.
+ * 2. Sanitizes and validates the input data received from the form.
+ * 3. Prepares and inserts the data into the 'myrecords' table in the database.
+ * 4. Optionally sets a cookie to limit form resubmission (commented out by default).
+ * 5. Returns a success or error message which is then displayed to the user.
+ *
+ * Note: This function assumes that all necessary POST fields are sent by the form.
+ *       It also uses the global $wpdb object to interact with the database.
+ */
+
 function my_custom_frontend_form_handle_ajax() {
 
      // Check if the user has already submitted in the last 24 hours
-    //  if (isset($_COOKIE['my_custom_form_submitted'])) {
-    //     echo 'You have already submitted the form. Please wait 24 hours before submitting again.';
-    //     wp_die();
-    // }
+     if (isset($_COOKIE['my_custom_form_submitted'])) {
+        echo 'You have already submitted the form. Please wait 24 hours before submitting again.';
+        wp_die();
+     }
 
     global $wpdb; // Global database connection
 
@@ -213,6 +256,19 @@ add_action('wp_ajax_nopriv_my_custom_frontend_form_action', 'my_custom_frontend_
 
 
 
+/**
+ * Displays and manages the records in the 'myrecords' table.
+ *
+ * This function performs several key tasks:
+ * 1. Handles requests for updating and deleting records, if necessary.
+ * 2. Processes search queries and filters to display specific records based on user input.
+ * 3. Renders a table showing the records from the 'myrecords' table with options to edit or delete.
+ * 4. Provides form inputs for filtering records based on search terms, date ranges, and user IDs.
+ * 5. Implements pagination, sorting, and other viewing options as required (if implemented).
+ *
+ * Note: This function should be used in admin areas or places where users need to manage records.
+ *       It assumes the existence of certain GET and POST parameters for its operations and uses global $wpdb for database queries.
+ */
 
 
 function my_custom_plugin_view_records() {
@@ -311,6 +367,19 @@ function my_custom_plugin_view_records() {
 }
 
 
+/**
+ * Processes the update request for a record in the 'myrecords' table.
+ *
+ * This function is responsible for handling the update operation of records. Key aspects include:
+ * 1. Verifying the AJAX request and ensuring security by checking nonces.
+ * 2. Sanitizing and validating the incoming data from the update form to prevent security issues and data corruption.
+ * 3. Updating the specific record in the 'myrecords' table based on the provided record ID and user inputs.
+ * 4. Returning a success or error message for the AJAX request to inform the user of the operation's outcome.
+ *
+ * Note: This function is typically called via AJAX and expects certain POST parameters to be set,
+ *       including a unique identifier for the record to be updated. It uses global $wpdb for database operations.
+ */
+
 function my_custom_plugin_process_update() {
     // Check if it's an AJAX request and the correct action
     if (isset($_POST['action']) && $_POST['action'] == 'my_custom_plugin_update_action') {
@@ -366,7 +435,18 @@ function my_custom_plugin_process_update() {
 add_action('wp_ajax_my_custom_plugin_update_action', 'my_custom_plugin_process_update');
 
 
-
+/**
+ * Handles the deletion of records from the 'myrecords' table.
+ *
+ * This function is responsible for:
+ * 1. Checking if the delete request is submitted along with the necessary record IDs.
+ * 2. Iterating through the list of provided record IDs and deleting each record from the database.
+ * 3. Utilizing the global $wpdb object for performing the delete operation on the database.
+ *
+ * Note: This function assumes that the deletion request is sent via a form submission (POST method).
+ *       It relies on the presence of 'record_ids' in the POST data, which should be an array of IDs to be deleted.
+ *       Proper security checks, like nonce verification, should be implemented to ensure safe operations.
+ */
 
 function my_custom_plugin_handle_delete_records() {
     global $wpdb;
@@ -379,6 +459,20 @@ function my_custom_plugin_handle_delete_records() {
     }
 }
 
+
+/**
+ * Displays a form for updating a specific record in the 'myrecords' table.
+ *
+ * Responsibilities of this function include:
+ * 1. Retrieving the specific record from the database based on the provided record ID.
+ * 2. Displaying a form pre-filled with the record's data, allowing users to update it.
+ * 3. Including necessary form fields corresponding to the record's data structure in 'myrecords' table.
+ * 4. Ensuring security by including nonce fields for verification during form submission.
+ * 5. Handling potential errors, such as the record not being found in the database.
+ *
+ * Note: This function expects a record ID to be passed as a parameter. It uses global $wpdb for database queries.
+ *       The form targets an AJAX handler for updating the record upon submission.
+ */
 
 function my_custom_plugin_display_update_form($record_id) {
     global $wpdb;
@@ -443,6 +537,21 @@ function my_custom_plugin_display_update_form($record_id) {
     }
 }
 
+/**
+ * Enqueues and outputs the JavaScript for handling AJAX submissions of the frontend update form.
+ *
+ * This function is responsible for:
+ * 1. Injecting JavaScript into the page footer, which binds a submission event handler to the update form.
+ * 2. Preventing the default form submission behavior to enable AJAX-based submission.
+ * 3. Serializing the form data and sending it to the WordPress backend via AJAX.
+ * 4. Handling the response from the AJAX request, displaying success or error messages to the user.
+ * 5. Optionally, redirecting the user or performing other actions upon successful form submission.
+ *
+ * Note: This function is designed to be used in conjunction with forms that require AJAX for data submission.
+ *       It assumes that the form has an ID which is targeted by the JavaScript for binding the event handler.
+ *       The actual AJAX URL and action should be appropriately set in the JavaScript code.
+ */
+
 function my_custom_plugin_frontend_ajax_script() {
     ?>
 <script type="text/javascript">
@@ -462,7 +571,7 @@ jQuery(document).ready(function($) {
                 // Redirect to the previous page after a short delay
                 setTimeout(function() {
                     window.history.back();
-                }, 1000); // 2 seconds delay
+                }, 1000); // 1 second delay
             },
             error: function() {
                 $('#update-form-response').html(
@@ -477,6 +586,19 @@ jQuery(document).ready(function($) {
 }
 
 
+/**
+ * Handles the display and processing of the record edit page.
+ *
+ * This function is responsible for:
+ * 1. Invoking the update process if an update request is detected.
+ * 2. Displaying the form for editing a record, which includes fetching and showing the current data of the record.
+ * 3. Handling the scenario where a record ID is provided through GET parameters for editing.
+ * 4. Ensuring that the appropriate form and data are shown based on the provided record ID.
+ *
+ * Note: This function relies on the 'record_id' GET parameter to determine which record to edit.
+ *       It uses the my_custom_plugin_display_update_form function for rendering the edit form.
+ *       Security checks, such as verifying user capabilities and nonces, should be performed as needed.
+ */
 
 function my_custom_plugin_edit_record_page() {
     my_custom_plugin_process_update(); // Handle update form submission
@@ -487,7 +609,21 @@ function my_custom_plugin_edit_record_page() {
 }
 
 
-// Shortcodes 
+/**
+ * Shortcode handler for displaying the custom frontend form.
+ *
+ * This function is responsible for:
+ * 1. Initiating an output buffer to capture the HTML output of the custom form.
+ * 2. Calling the my_custom_frontend_form function which generates the HTML form.
+ * 3. Returning the buffered HTML content, allowing it to be used as a shortcode in posts, pages, or widgets.
+ *
+ * Usage:
+ * [my_custom_frontend_form] - Embeds the custom frontend form in a post, page, or widget.
+ *
+ * Note: This function uses output buffering to capture and return the form's HTML instead of directly echoing it.
+ *       This is essential for the proper functioning of shortcodes in WordPress, ensuring that the form appears
+ *       exactly where the shortcode is used in the content.
+ */
 
 
 
@@ -498,6 +634,23 @@ function my_custom_frontend_form_shortcode() {
 }
 add_shortcode('my_custom_frontend_form', 'my_custom_frontend_form_shortcode');
 
+
+/**
+ * Registers a custom Gutenberg block for the plugin.
+ *
+ * This function handles the following tasks:
+ * 1. Registering the JavaScript file for the block editor interface, specifying any dependencies it requires.
+ * 2. Registering the custom block type with WordPress, linking it to the registered JavaScript and an optional render callback.
+ * 3. Defining the block's metadata, such as its name, category, and editor script handle.
+ * 4. Optionally setting a render callback if the block requires server-side rendering (e.g., for dynamic content).
+ *
+ * Usage:
+ * This function should be hooked to the 'init' action to ensure it runs at the correct time in WordPress's execution.
+ *
+ * Note: Ensure that the JavaScript file for the block editor is correctly enqueued and that the block's metadata
+ *       is accurately defined. If the block requires server-side rendering, the render callback function should be
+ *       properly implemented and specified here.
+ */
 
 function my_custom_plugin_register_block() {
     // Register the block editor script
@@ -517,31 +670,81 @@ add_action('init', 'my_custom_plugin_register_block');
 
 
 
+/**
+ * Custom widget class extending WP_Widget for displaying a frontend form.
+ *
+ * This class defines a custom widget which can be added to widget areas in WordPress.
+ * The widget displays a frontend form, typically used for data submission or user interaction.
+ *
+ * Features of this custom widget include:
+ * 1. Defining widget properties like its name and description in the constructor.
+ * 2. Implementing the 'widget' method to specify the output of the widget on the frontend.
+ * 3. Optionally, implementing 'form' and 'update' methods to handle widget settings in the admin area, if needed.
+ *
+ * Usage:
+ * - The widget can be added to any registered widget area through the WordPress dashboard.
+ * - Once added, it displays the custom frontend form wherever the widget area is rendered.
+ *
+ * Note: This class should be initialized and registered within the WordPress widget initialization process.
+ *       Typically, this is done through the 'widgets_init' action hook.
+ */
 class My_Custom_Form_Widget extends WP_Widget {
 
+    /**
+     * Constructs the new widget instance.
+     */
     function __construct() {
         parent::__construct(
-            'my_custom_form_widget', // Base ID
-            'My Custom Form Widget', // Name
-            array('description' => 'Displays the custom form') // Args
+            'my_custom_form_widget', // Base ID of the widget
+            'My Custom Form Widget', // Display name of the widget
+            array('description' => 'Displays the custom form') // Additional options for the widget
         );
     }
 
+    /**
+     * Outputs the content of the widget.
+     *
+     * @param array $args Display arguments including 'before_title', 'after_title', 'before_widget', and 'after_widget'.
+     * @param array $instance The settings for the particular instance of the widget.
+     */
     public function widget($args, $instance) {
-        echo my_custom_frontend_form_shortcode(); // Display the form
+        // Output the frontend form
+        echo my_custom_frontend_form_shortcode();
     }
+
+    // Optional: Implement 'form' and 'update' methods for handling admin settings.
 }
 
+/**
+ * Registers the custom widget with WordPress.
+ */
 function my_custom_plugin_register_widget() {
     register_widget('My_Custom_Form_Widget');
 }
 add_action('widgets_init', 'my_custom_plugin_register_widget');
 
 
+
+/**
+ * Shortcode handler for displaying a custom report.
+ *
+ * This function is responsible for:
+ * 1. Checking user permissions to ensure only authorized users (like editors or administrators) can view the report.
+ * 2. Using output buffering to capture the HTML generated by the report viewing function.
+ * 3. Returning the captured HTML content to be used wherever the shortcode is placed within posts, pages, or widgets.
+ *
+ * Usage:
+ * [my_custom_report] - Embeds the custom report in a post, page, or widget area.
+ *
+ * Note: This function assumes that the report generation logic (like querying the database and generating HTML)
+ *       is handled by the my_custom_plugin_view_records function or a similar function designated for this purpose.
+ *       It ensures that the report is only accessible to logged-in users with sufficient permissions, adhering to
+ *       WordPress's security best practices.
+ */
 function my_custom_plugin_report_shortcode() {
     if (is_user_logged_in() && current_user_can('edit_others_posts')) {
         ob_start();
-        my_custom_plugin_view_records(); // Assuming this is your existing function that outputs the report table
+        my_custom_plugin_view_records(); // Assuming this function generates the report.
         return ob_get_clean();
     } else {
         return '<p>You must be logged in as an editor or higher to view this report.</p>';
@@ -549,18 +752,50 @@ function my_custom_plugin_report_shortcode() {
 }
 add_shortcode('my_custom_report', 'my_custom_plugin_report_shortcode');
 
+
+/**
+ * Enqueues the JavaScript script for the custom report Gutenberg block.
+ *
+ * This function is specifically responsible for:
+ * 1. Enqueuing the JavaScript file that contains the logic for the custom Gutenberg block used for displaying reports.
+ * 2. Specifying the dependencies of the script, typically including WordPress blocks, editor components, and other relevant libraries.
+ * 
+ * Usage:
+ * - The script registered by this function is used to control the behavior and rendering of the custom report block in the Gutenberg editor.
+ * - This function should be hooked to the 'enqueue_block_editor_assets' action, ensuring that the script is loaded only in the context of the block editor.
+ *
+ * Note: This function does not directly render the block on the front end. It is primarily focused on the block editor experience,
+ *       allowing the user to interact with the block within the editor. The rendering of the block on the front end is typically
+ *       handled by a separate callback or render function.
+ */
 function my_custom_plugin_report_block() {
     wp_enqueue_script(
-        'my-custom-report-block',
-        plugin_dir_url(__FILE__) . 'my-report-block.js',
-        array('wp-blocks', 'wp-editor', 'wp-element')
+        'my-custom-report-block', // Handle for the script.
+        plugin_dir_url(__FILE__) . 'my-report-block.js', // URL to the JavaScript file.
+        array('wp-blocks', 'wp-editor', 'wp-element') // Script dependencies.
     );
 }
 add_action('enqueue_block_editor_assets', 'my_custom_plugin_report_block');
 
 
+
+/**
+ * Server-side rendering function for the custom report Gutenberg block.
+ *
+ * This function performs the following tasks:
+ * 1. Generates the HTML content for the custom report block when it is rendered on the front end.
+ * 2. Utilizes the same logic as the my_custom_plugin_report_shortcode function to ensure consistency between the shortcode and block output.
+ * 3. Can include additional logic or formatting specific to the block's presentation in the front end, if required.
+ *
+ * Usage:
+ * - This function is used as the 'render_callback' for the custom report block registered in the block editor.
+ * - It ensures that the content displayed on the front end matches what is expected from the block's configuration in the editor.
+ *
+ * Note: While the block's editor appearance and interactions are handled by JavaScript in the block editor,
+ *       this function is responsible for how the block actually appears on the front end of the site.
+ */
 function my_custom_plugin_report_block_render() {
-    return my_custom_plugin_report_shortcode(); // Reuse the shortcode function.
+    return my_custom_plugin_report_shortcode(); // Reuse the shortcode function for front-end rendering.
 }
 register_block_type('my-custom-plugin/my-custom-report', array(
     'render_callback' => 'my_custom_plugin_report_block_render',
